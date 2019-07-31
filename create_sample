@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# try to assign parameters
+if [ ${#} -ne 1 ]
+then
+  echo "SYNTAXIS: create_sample NAME" 1>&2
+  exit 1
+else
+  NAME="${1}"
+fi
+
+## make the directory structure ##
+mkdir "${NAME}"
+cd "${NAME}"
+# cp "${CRFBIN}"/templates/empty_jobfile.sh ./jobs.sh
+# set up scf #
+mkdir scf
+cp "${CRFBIN}"/templates/scf_jobfile.sh ./scf/jobfile.sh
+# set up dmrg #
+mkdir dmrg dmrg/act
+cd dmrg/act
+mkdir Ag0 Ag0/Tmp
+# job and testfile for dmrg
+cp "${CRFBIN}"/templates/dmrg_jobfile.sh ./jobfile.sh
+sed -i "s/DMRGSUBDIR/Ag0/" ./jobfile.sh
+sed "/#PBS/,/send mail/d" ./jobfile.sh > ./testfile.sh
+sed -i "s/PBS_O_WORKDIR/PWD/" ./testfile.sh
+sed -i "s/&> dmrg.out/\#&> dmrg.out/" ./testfile.sh
+# dmrg input
+ln -s ../../scf scf
+cp "${CRFBIN}"/templates/chemps2_template ./Ag0/dmrg.in
+sed -i "s/IRREPVAL/0/; s/EXCITVAL/0/" ./Ag0/dmrg.in
+cd - &> /dev/null
+# set up t3ns #
+mkdir t3ns t3ns/act t3ns/act/Ag0
+cd t3ns/act/Ag0
+cp "${CRFBIN}"/templates/T3NS_jobfile.sh ./jobfile.sh
+cp "${CRFBIN}"/templates/T3NS_template_in ./t3ns.in
+cp "${CRFBIN}"/templates/T3NS_template_network.netw ./CrF6.netw
+cd - &> /dev/null
+
+cat << 'HERE'
+To be done:
+-SCF:
+ -> psi4 input file:
+    psi4_input scf energy BASIS [RELATIV]
+ -> NAME and WALLTIME in jobfile.sh
+ -> [optional] a subdir containing:
+    * a file "orborder.txt"
+    * an act.FCIDUMP:
+        python $CRFBIN/fcidump/FCImanip.py \
+        ../scf.FCIDUMP ./act.FCIDUMP ./orborder.txt
+ -> FCIDUMP convertion:
+    fciformat xxx.FCIDUMP D2h > xxxMol.FCIDUMP
+-DMRG:
+ -> NAME, WALLTIME and RESOURCES in jobfile
+ -> IRREPVAL, EXCITVAL, NELECVAL, NAME in dmrg.in
+ -> a test run using testfiles.sh
+HERE

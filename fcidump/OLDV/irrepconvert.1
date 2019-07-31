@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# Script that converts between the psi4 irrep convention
+# and the molpro irrep convention
+
+# @param:
+#   $1 : the symmetry group form which convertion is done
+#        The supported symmetry groups are 'C1', 'Ci',
+#        'C2', 'Cs', 'D2', 'C2v', 'C2h' and 'D2h'
+
+
+# @return:
+#   The converted file.
+
+# try to assign the arguments
+if [ ${#} -ne '3' ]
+then
+  echo "Syntaxis: irrepconvert FILE CONVERTION GROUP" 1>&2
+  echo "  CONVERTION: psi2mol or mol2psi" 1>&2
+  echo "  GROUP: C2, Cs, D2, C2v, C2h or D2h" 1>&2
+  exit 1
+else
+  FILE="$1"
+  CONVERTION="$2"
+  GROUP="$3"
+fi
+
+# Convertion array: "${END[i]}" will contain the
+# molcas irrep corresponding to i'th psi4 irrep.
+# Counting starts at 0.
+START=''
+END=''
+
+# verify the symmetry group and assign the appropriate
+# convertion values
+if [ "${CONVERTION}" = 'psi2mol' ]
+then
+  # psi4->molpro
+  case "${GROUP}" in
+    C1 )   START="1"; END="1" ;;
+    Ci )   START="12"; END="12" ;;
+    C2 )   START="12"; END="12" ;;
+    Cs )   START="12"; END="12" ;;
+    D2 )   START="1234"; END="1432" ;;
+    C2v )  START="1234"; END="1423" ;;
+    C2h )  START="1234"; END="1423" ;;
+    D2h )  START="12345678"; END="14678532" ;;
+    * ) echo "The symmetry group was not recognized." 1>&2
+        exit 2 ;;
+  esac
+elif [ "${CONVERTION}" = 'mol2psi' ]
+then
+  # molpro->psi4
+  case "${GROUP}" in
+    C1 )   START="1"; END="1" ;;
+    Ci )   START="12"; END="12" ;;
+    C2 )   START="12"; END="12" ;;
+    Cs )   START="12"; END="12" ;;
+    D2 )   START="1234"; END="1432" ;;
+    C2v )  START="1234"; END="1342" ;;
+    C2h )  START="1234"; END="1342" ;;
+    D2h )  START="12345678"; END="18726345" ;;
+    * ) echo "The symmetry group was not recognized." 1>&2
+        exit 2 ;;
+  esac
+else
+  echo "The convertion type was not recognized." 1>&2
+  exit 2
+fi
+
+# the supported keywords
+KEYWORDS="ORBSYM"
+convertKey() {
+  sed "/$1/q" "$2" | sed '/ORBSYM/d'
+  grep "$1" "$2" | tr ${START} ${END}
+  sed "1,/$1/d" "${2}"
+}
+
+convertKey ORBSYM "${FILE}"
+
+# sed '/ORBSYM/q' "${FILE}" | sed '/ORBSYM/d'
+# grep 'ORBSYM' "${FILE}" | tr ${START} ${END}
+# sed '1,/ORBSYM/d' "${FILE}" 
+
+# for key in KEYWORDS; do
+#   sed -i "/${key}/
+#       s/0:/${CONVERT[0]}:/
+#       s/1:/${CONVERT[1]}:/
+#       s/2:/${CONVERT[2]}:/
+#       s/3:/${CONVERT[3]}:/
+#       s/4:/${CONVERT[4]}:/
+#       s/5:/${CONVERT[5]}:/
+#       s/6:/${CONVERT[6]}:/
+#       s/7:/${CONVERT[7]}:/
+#   "
+
+# (( MAXIRREP = ${#CONVERT} - 1 ))
+
+# exec 3< "${FILE}" 
+# while read line 0<&3; do
+#   if echo -n "${line}" | grep 'DOCC' > /dev/null
+#   then
+#     echo "${line}"
+#     echo "${line}" | sed -r "${REPLACE}"
+#   elif echo -n "${line}" | grep ':' > /dev/null
+#   then
+#     IRREP=$(echo "${line}" | cut -d':' -f1)
+#     NUMBER=$(echo "${line}" | cut -d':' -f2)
+#     CONVERT[IRREP - 1] + 1
+#     echo "${CONVERT[${IRREP}]}:${NUMBER}"
+#   else
+#     echo "${line}"
+#   fi
+# done
+
+# # echo ${CONVERT[0]}
+# # echo ${CONVERT[1]}
+# # echo ${CONVERT[2]}
+# # echo ${CONVERT[3]}
+# # echo ${CONVERT[4]}
+
+# # cat "${FILE}" | sed "s/0:/${CONVERT[0]}:/" |
+# # sed "s/1:/${CONVERT[1]}:/" |
+# # sed "s/2:/${CONVERT[2]}:/" |
+# # sed "s/3:/${CONVERT[3]}:/" |
+# # sed "s/4:/${CONVERT[4]}:/" |
+# # sed "s/5:/${CONVERT[5]}:/" |
+# # sed "s/6:/${CONVERT[6]}:/" |
+# # sed "s/7:/${CONVERT[7]}:/"
+# # tr "0-${MAXIRREP}" "${CONVERT}"
+

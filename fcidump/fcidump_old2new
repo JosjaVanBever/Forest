@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# $1 : FCIDUMP file to convert from "old format" to "new format"
+
+if [ ${#} -ne 1 ]
+then
+  echo "Syntaxis: fcidump_old2new FCIDUMPFILE" 1>$2
+  exit 1
+fi
+
+if grep -A5 '^&FCI$' "${1}" | egrep '^[a-zA-Z2]*=[0-9,]*,$' > /dev/null
+then
+  echo "The provided file is already in old FCIDUMP format." 1>&2
+  exit 2
+fi
+
+sed '
+   1,/=[^,=],$/ s/ /\n/g
+   s/\//\&END/
+   /^ISYM.*$/d' -i "${1}"
+   sed '/^$/d' -i "${1}"
+
+
+exit 0

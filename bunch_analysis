@@ -1,0 +1,8 @@
+#!/bin/bash
+
+while read line
+    do
+        echo $(echo "$line" | sed 's/\t/ /g' | cut -d' ' -f1-3 | sed 's/ /\t/g')
+        FILE=$(echo "$line" | rev | cut -d$'\t' -f1 | rev)
+        t3ns_E_analysis "${FILE}"
+    done

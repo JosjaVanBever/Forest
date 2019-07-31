@@ -1,0 +1,8 @@
+#!/bin/bash
+
+mkdir t3ns t3ns/Ag0
+cp "${CRFBIN}"/templates/T3NS_jobfile.sh ./t3ns/Ag0/jobfile.sh
+cp "${CRFBIN}"/templates/T3NS_template_in ./t3ns/Ag0/t3ns.in
+cp "${CRFBIN}"/templates/T3NS_template_network.netw ./t3ns/Ag0/CrF6.netw
+
+exit 0

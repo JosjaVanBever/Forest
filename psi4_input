@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# input: $1 = LOT = level of theory        ->   scf, mp2, mp4
+#        $2 = TYPE = energy/optimization,  ->   energy, optimization
+#        $3 = BASIS = basis set used       ->   cc-pVDZ, ano-rcc, ano-rcc_restricted
+#        $4 = COORD = coordinates in .xyz  ->   name.xyz
+#        $5 = RELATIVISTIC [OPTIONAL]      ->   x2c, dkh
+# example: ./input.sh scf energy cc-pVDZ ccPVDZ_nonRel/scf_out.xyz
+
+if [ ${#} -ne 4 -a ${#} -ne 5 ]
+then
+  echo "Syntaxis: ./input.sh LOT TYPE BASIS COORD [RELATIV]"
+  exit 1
+fi
+
+# assign the parameters
+LOT=${1}
+TYPE=${2}
+BASIS=${3}
+COORD=${4}
+RELATIV=${5}
+
+# set a filename
+FILENAME="${LOT}_in.dat"
+
+# generate the input file
+cat ${CRFBIN}/templates/psi4_template |
+sed "s/LOT/${LOT}/; s/TYPE/${TYPE}/; s/BASIS/${BASIS}/" |
+sed "/COORD/ r ${COORD}" | sed "/COORD/,+2d" > ${FILENAME}
+
+# add relativistic corrections if requested
+if [ "${RELATIV}" != "" ]
+then
+  sed -i "/set basis/s/$/\nset relativistic ${RELATIV}/" ${FILENAME}
+fi
+
+exit 0
+

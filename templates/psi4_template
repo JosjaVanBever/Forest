@@ -1,0 +1,18 @@
+#! TYPE of CrF6 LOT/BASIS
+
+# memory 4 Gb
+
+molecule crf {
+COORD 
+ units angstrom
+}
+
+set basis BASIS
+set scf_type DIRECT
+set e_convergence 1e-12
+set d_convergence 1e-10
+set ints_tolerance 0.0
+E, wfn = TYPE('LOT', return_wfn=True)
+molden(wfn, 'LOT.molden')
+fcidump(wfn, fname='LOT.FCIDUMP')
+

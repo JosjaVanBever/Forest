@@ -1,0 +1,11 @@
+networkfile 	CrF6.netw
+symm 		    u1 su2 d2h
+ts 		        14 0 0
+
+interaction 	../../scf/scfMol.FCIDUMP
+
+minD 		200 	200
+maxD 		800 	1000
+trunc_err 	1e-6 	5e-7
+david_its 	100 	100
+sweeps 		20 	    20

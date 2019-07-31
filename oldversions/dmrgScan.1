@@ -1,0 +1,142 @@
+#!/bin/bash
+
+# name of shell script
+ME=$(basename "$0")
+
+
+# prints for error messages and help
+SYNTAX="SYNTAXIS: ${ME} -g 'geom list' -a 'active spaces' -s 'state list'
+[-t] -l walltime=xx:xx:xx -l nodes=y:ppn=z [-q queue] CLUSTER [ INFILE ]"
+
+
+# display info for --help = -h flag
+display_help() { echo "
+USAGE:
+${SYNTAX}
+
+OPTIONS:
+  -g, --geometry=LIST     (List of) geometrie(s) to handle, e.g. '1.732 1.734'.
+                          The geometry must label an existing subfolder.
+  -a, --active=LIST       (List of) active space(s) to handle, e.g. '12o12e'.
+                          Each active space must label a subfolder of the geometry.
+  -s, --states=LIST       (List of) state(s) to handle, e.g. 'Ag0 B1g0 Ag1'.
+                          Each state must label a subfolder of the active space.
+                          D2h0 == 'Ag0 B1g0 B2g0 B3g0 Au0 B1u0 B2u0 B3u0'
+  -t, --test              Do not submit the jobs but print out the qsub commands.
+  -l walltime=TIME        Wall time for each job (format xx:xx:xx).
+  -l nodes=y:ppn=z        Resources needed for each job (format 'nodes=x:ppn=y').
+  -q QUEUE                Queue for each job (e.g. short/long, but not for skitty).
+
+EXAMPLES:
+  ${ME} -g '1.732 1.734 1.736' -a 12o12e -s 'D2h0 Ag1 Ag2' -l walltime=00:10:00 -l nodes=1:ppn=3 delcatty
+  ${ME} -g '1.732 1.734 1.736' -a 18o18e -s D2h0 -l walltime=08:00:00 -l nodes=1:ppn=6 delcatty
+  ${ME} -g '1.732 1.734 1.736' -a 33o34e -s 'Ag1 Ag2' -l walltime=72:00:00 -l nodes=1:ppn=all skitty
+   
+"
+exit 0
+}
+
+
+# Transform long options to short ones
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    "--help" | "-help")     set -- "$@" "-h" ;;
+    "--geometry")           set -- "$@" "-g" ;;
+    "--active")             set -- "$@" "-a" ;;
+    "--states")             set -- "$@" "-s" ;;
+    *)                      set -- "$@" "$arg"
+  esac
+done
+
+
+# variables to remember the chosen options
+geometry=''        # default == no geometry
+active=''          # default == no active space
+states=''          # default == no states
+qsubopt=''         # should always manually be set
+cluster=''         # should always manually be set
+infile='dmrg.in'   # default name of the input files
+test='false'       # default == submit the jobs
+
+
+# try to handle the options
+while getopts ":g:a:s:l:q:th" opt; do
+  if [[ "${OPTARG}" =~ ^-{1,2}.* ]]
+  then
+    echo "${SYNTAX}" 1>&2
+    exit 1
+  fi
+  case "${opt}" in
+    h ) display_help
+        exit 0 ;;
+    t ) test='true' ;;
+    g ) geometry="${OPTARG}" ;;
+    a ) active="${OPTARG}" ;;
+    s ) states=$(sed '
+        s/D2h0/Ag0 B1g0 B2g0 B3g0 Au0 B1u0 B2u0 B3u0/
+        ' <<< ${OPTARG}) ;;
+    l ) qsubopt+="-l ${OPTARG} " ;;
+    q ) qsubopt+="-q ${OPTARG} " ;;
+    \?) echo "${SYNTAX}" 1>&2
+        exit 1 ;;
+  esac
+done
+shift "$((OPTIND - 1))"
+
+
+# try to assign the arguments
+if [ $# -ne '1' -a $# -ne '2' ]
+then
+  echo "${SYNTAX}" 1>&2
+  exit 1
+else
+  cluster="$1"
+  if [ $# -ge '2' ]
+  then
+    infile="$2"
+  fi
+fi
+
+find . -type f -name "${infile}" |
+  checkdir "${geometry}" |
+  checkdir "${geometry}" |
+  checkdir "${geometry}" |
+  | xargs echo
+
+for file in $(find . -type f -name "${infile}" | xargs echo); do
+  for geom in ${geometry}; do
+  if grep -q 
+  echo "${file}"
+done
+
+
+# for geom in ${geometry}; do
+#   for geomdir in $(find . -type d -name "${geom}" | xargs echo); do
+#     cd "${geomdir}"
+#     for act in "${active}"; do
+#        for actdir in  
+#     for stat in ${states}; do
+#       for statedir 
+# 
+# # validate the 
+# 
+# RAD="$1"
+# ACT="$2"
+# CLU="$3"
+# 
+# cd "${PWD}"
+# 
+# module swap cluster/"$2"
+# for irrep in Ag0 B1g B2g B3g Au B1u B2u B3u; do
+#     qsub jobfile.sh -N dmrg_CrF6_anorcc_dkh_"${RAD}"_"${ACT}"_"${irrep}" -v irrep="${irrep}"
+# done
+# 
+# module swap cluster/"${3:-$2}"
+# for irrep in Ag1 Ag2; do
+#     qsub jobfile.sh -N dmrg_CrF6_anorcc_dkh_1.732_"${ACT}"_"${irrep}" -v irrep="${irrep}"
+# done
+# 
+# 
+# exit 0
+# 

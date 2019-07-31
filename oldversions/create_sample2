@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# try to assign parameters
+if [ ${#} -ne 1 ]
+then
+  echo "SYNTAXIS: create_sample NAME" 1>&2
+  exit 1
+else
+  NAME="${1}"
+fi
+
+# make the directory structure
+mkdir "${NAME}"
+cd "${NAME}"
+mkdir scf dmrg dmrg/Ag0 dmrg/Ag0/Tmp
+# WORKINGSPACE=$(pwd | sed 's/.*CrF6/CrF6/')
+cp "${CRFBIN}"/templates/dmrg_jobfile.sh ./dmrg/jobfile.sh
+# sed -i "s+CrF6/RELATIV/BASIS/ACTIVESPACE/R+${WORKINGSPACE}+" \
+    ./jobfile.sh
+sed -i "s/DMRGSUBDIR/Ag0/" ./dmrg/jobfile.sh
+sed "/#PBS/,/ulimit/d" ./dmrg/jobfile.sh > ./dmrg/testfile.sh
+sed -i "s/PBS_O_WORKDIR/PWD/" ./dmrg/testfile.sh
+sed -i "s/&> dmrg.out/\#&> dmrg.out/" ./dmrg/testfile.sh
+cp "${CRFBIN}"/templates/chemps2_template ./dmrg/Ag0/dmrg.in
+sed -i "s/IRREPVAL/0/; s/EXCITVAL/0/" ./dmrg/Ag0/dmrg.in
+cp "${CRFBIN}"/templates/scf_jobfile.sh ./scf/jobfile.sh
+# sed -i "s+CrF6/RELATIV/BASIS/ACTIVESPACE/R+${WORKINGSPACE}+" \
+#    ./scf/jobfile.sh
+mkdir t3ns t3ns/Ag0
+cp "${CRFBIN}"/templates/T3NS_jobfile.sh ./t3ns/Ag0/jobfile.sh
+cp "${CRFBIN}"/templates/T3NS_template_in ./t3ns/Ag0/t3ns.in
+cp "${CRFBIN}"/templates/T3NS_template_network.netw ./t3ns/Ag0/CrF6.netw
+
+cat << 'HERE'
+To be done:
+-In jobfile.sh and testfile.sh:
+BASIS, RELATIV, WALLTIME, RESOURCES
+-In dmrg/Ag0/dmrg.in:
+IRREPVAL, EXCITVAL, NELECVAL, NAME
+-A psi4 input file using
+psi4_input scf energy BASIS [RELATIV]
+-A psi4 run (don't forget the nodes!)
+-[optional] a file "orborder.txt"
+-[optional] an act.FCIDUMP using
+python FCImanip.py ./scf.FCIDUMP ./act.FCIDUMP ../../orborder.txt
+-a FCIDUMP convertion using
+fciformat xxx.FCIDUMP D2h > xxxMol.FCIDUMP
+-a run of testfiles.sh
+-a qsub of jobfile.sh
+HERE

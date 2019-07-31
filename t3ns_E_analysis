@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# SYNTAXIS: t3ns_E_analysis FILE
+
+REG1='800 '
+REG2='1000'
+REG3='1200'
+REG4='1400'
+REG5='1600'
+REG6='1800'
+
+
+grep -A1 'END OF REGIME' "${1}" |
+    sed 's/END OF REGIME //' | sed 's/MINIMUM ENERGY ENCOUNTERED : //' |
+    sed 's/AFTER/\t/' | xargs echo | sed 's/ SWEEPS\. /\t/g' | sed 's/ -- /\n/g' |
+    sed "s/^1/${REG1}  /; s/^2/${REG2}  /; s/^3/${REG3}  /; s/^4/${REG4}  /
+         s/^5/${REG5}  /; s/^6/${REG6}  /" |
+    sed 's/THE ENERGY DID NOT CONVERGE.*$/no convergence/'
+
+exit 0

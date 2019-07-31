@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# name of shell script
+ME=$(basename "$0")
+
+# prints for error messages and help
+SYNTAX="SYNTAXIS: ${ME} [-f FILTER1 -f FILTER2 ..] [-i INFILE] [-t]
+-l walltime=xx:xx:xx,nodes=y:ppn=z [-q QUEUE] [-o OTHERS] CLUSTER"
+
+# display info for --help = -h flag
+display_help() { echo "
+USAGE:
+${SYNTAX}
+
+OPTIONS:
+  -h, --help              Display help.
+  ---------------------------------------------------------------------------------
+  -f, --filter=LIST       A parameter to scan, given a list of options.
+                          Each parameter must label a subdirectory in which the
+                          specified input files can be found.
+  -i, --infile=FILE       Name of the input files that have to be submitted.
+                          Parameter expansion is allowed using e.g. '*.in'.
+  -t, --test              Do not submit the jobs but print out the qsub commands.
+  ---------------------------------------------------------------------------------
+  -l walltime=TIME        Wall time for each job (format xx:xx:xx).
+     nodes=y:ppn=z        Resources needed for each job (format 'nodes=x:ppn=y').
+  -q QUEUE                Queue for each job (e.g. short/long, but not for skitty).
+  -o, --others=LIST       Other options that should be passed to the qsub command.
+
+FILTER EXPANSION:
+  When specifying a new filter, following shorthands can be used:
+    STATE_D2h0 == 'Ag0 B1g0 B2g0 B3g0 Au0 B1u0 B2u0 B3u0'
+
+EXAMPLES:
+  ${ME} -f '1.732 1.734 1.736' -f 12o12e -f 'STATE_D2h0 Ag1 Ag2' -l walltime=00:10:00,nodes=1:ppn=3 delcatty
+  ${ME} -f '1.732 1.734 1.736' -f 18o18e -f STATE_D2h0 -i '*.in' -l walltime=08:00:00,nodes=1:ppn=6 delcatty
+  ${ME} -f '1.732 1.734 1.736' -f 33o34e -f 'Ag1 Ag2' -l walltime=72:00:00,nodes=1:ppn=all skitty
+"
+exit 0
+}
+
+
+# Transform long options to short ones
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    "--help" | "-help")     set -- "$@" "-h" ;;
+    "--filter")             set -- "$@" "-f" ;;
+    "--infile")             set -- "$@" "-i" ;;
+    "--test")               set -- "$@" "-t" ;;
+    *)                      set -- "$@" "$arg"
+  esac
+done
+
+
+# variables to remember the chosen options
+filters=''         # default == no filters
+qsubopt=''         # should always manually be set
+cluster=''         # should always manually be set
+infile='dmrg.in'   # default name of the input file
+test='false'       # default == submit the jobs
+
+
+# try to handle the options
+while getopts ":f:l:q:i:th" opt; do
+  if [[ "${OPTARG}" =~ ^-{1,2}.* ]]
+  then
+    echo "${SYNTAX}" 1>&2
+    exit 1
+  fi
+  case "${opt}" in
+    h ) display_help
+        exit 0 ;;
+    t ) test='true' ;;
+    f ) filters+="$(sed '
+          s/STATE_D2h0/Ag0 B1g0 B2g0 B3g0 Au0 B1u0 B2u0 B3u0/;
+          s/ /|/g; s/^/(/; s/$/)/
+          ' <<< ${OPTARG}) " ;;
+    i ) infile="${OPTARG}" ;;
+    l ) qsubopt+="-l ${OPTARG} " ;;
+    q ) qsubopt+="-q ${OPTARG} " ;;
+    o ) qsubopt+=" ${OPTARG}" ;;
+    \?) echo "${SYNTAX}" 1>&2
+        exit 1 ;;
+  esac
+done
+shift "$((OPTIND - 1))"
+
+
+# try to assign the arguments
+if [ $# -ne '1' ]
+then
+  echo "${SYNTAX}" 1>&2
+  exit 1
+else
+  cluster="$1"
+fi
+
+
+module swap cluster/"${cluster}"
+
+# collect all corresponding input files
+results=$(find . -type f -name "${infile}")
+for filter in ${filters}; do
+  results=$(grep -E "/${filter}/" <<< "${results}")
+done
+
+# submit a job for each input file
+for file in $results; do
+    echo $file
+    cd ${file%/*}
+    echo "qsub -N "${file%/*}" ${qsubopt} -v inputf=${file##*/} DMRGrun.sh"
+    if [ "${test}" = 'false' ]
+    then
+      qsub -N "${file%/*}" ${qsubopt} -v inputf=${file##*/} $CRFBIN/DMRGrun.sh
+    fi
+    cd - > /dev/null
+done
+
+exit 0

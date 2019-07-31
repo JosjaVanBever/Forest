@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for r in 1.68 1.69 1.70 1.71 1.72; do
+  Eval=$(cat "${r}"/scf/scf_out.dat | grep 'Total Energy =' |
+    egrep -o '[^ ]*$')
+  Rval="${r}"
+  echo -e "${Rval}\t${Eval}"
+done
+
+exit 0
+

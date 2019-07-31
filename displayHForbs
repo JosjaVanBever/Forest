@@ -1,0 +1,22 @@
+#!/bin/bash
+
+ME=$(basename "$0")
+SYNTAX="${ME} FILE"
+UNREAD="${ME}: could not read file:"
+
+if [ ${#} -ne 1 -a ${#} -ne 0 ]
+then
+  echo "${SYNTAX}" 1>&2
+  exit 1
+else
+  SCFOUT="${1:--}"
+  if [ ! -r "${SCFOUT}" -a "${SCFOUT}" != '-' ]
+  then
+    echo "${UNREAD} ${SCFOUT}" 1>&2
+  fi
+fi
+
+cat "${SCFOUT}" | sed -n "/Orbital Energies \[Eh\]/,/Final Occupation by Irrep/p" |
+head -n-2 | sed 's/ *//' | sed -r 's/([0-9]{2,} +)([0-9])/\1\n\2/g' |
+sed -r 's/^[^0-9]+/# &/'
+

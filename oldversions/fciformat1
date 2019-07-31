@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# @param
+# $1 : the FCIDUMP file to be converted
+
+# @options
+# -n : keep the current irrep convention
+
+# @error
+# exit 1 : syntax error
+# exit 2 : no valid python module
+
+# syntax print for error messages
+SYNTAX="Syntaxis: fciformat [-k] FILE SYMMGROUP"
+
+# default values
+PSI2MOL='true'
+
+# try to handle the options
+while getopts ":k" opt; do
+  case "${opt}" in
+    k ) PSI2MOL='false'
+        ;;
+    \?) echo "${SYNTAX}" 1>&2
+        exit 1
+  esac
+done
+shift "$((OPTIND - 1))"
+
+# try to assign the argument
+if [ "${#}" -ne 2 ]
+then
+  echo "${SYNTAX}" 1>&2
+  exit 1
+else
+  FCIDUMP="${1}"
+  SYMMGROUP="${2}"
+fi
+
+# check wether a valid python module is loaded
+PYTHONERROR=$( { python -c 'import numpy'; } 2>&1 )
+if [ "${PYTHONERROR}" != '' ]
+then
+  echo "fciformat: No valid python module was loaded. Loaded Python/2.7.15-intel-2018b." 1>&2
+  module purge
+  module load Python/2.7.15-intel-2018b
+fi
+
+# start file manipulations:
+
+# split the file in header and integrals
+HEADLENGTH=$(( $(grep -n -m1 '&END' ${FCIDUMP} | cut -d':' -f1) + 1 ))
+csplit -f FCI "${FCIDUMP}" "${HEADLENGTH}" > /dev/null
+# FCI00 now contains the header and FCI01
+# contains the integrals
+
+# edit the header:
+# 1) convert to the "old" format
+"${CRFBIN}"/fcidump/fcidump_new2old FCI00
+# 2) convert to molcas convention
+if [ "${PSI2MOL}" = 'true' ]
+then
+  python "${CRFBIN}"/fcidump/psi2molpro.py FCI00 "${SYMMGROUP}" > FCI00mod
+else
+  cp FCI00 FCI00mod
+fi
+
+# paste the results together
+cat FCI00mod FCI01 #> "${FCIDUMP}"
+
+# clean up the intermediate files
+rm FCI00 FCI00mod FCI01
+
+exit 0

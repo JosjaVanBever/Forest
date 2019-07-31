@@ -1,0 +1,7 @@
+#!/bin/bash
+
+find 1.73? -name *.out | grep t3ns |
+sed 's|^\(\([^/]*\)/\([^/]*\)/\([^/]*\)/\([^/]*\)/.*$\)|\5\t\4\t\2\t\1|' | sort -d&'\t' -k1 -k2 -k3 --
+echo
+
+exit 0
