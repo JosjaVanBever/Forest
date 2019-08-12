@@ -1,0 +1,23 @@
+1 1 a
+1 a 1 b
+1 1 b 1 c
+1 d
+1 d 1 e
+1 1 e 1 c 1 f
+7 7 g
+7 g 7 h
+7 7 h 7 i
+3 j
+3 j 3 k
+3 3 k 3 i 3 f 5 l
+8 8 m
+5 5 n
+5 5 n 5 m 5 o
+4 4 p
+4 p 4 q
+4 4 q 4 o 5 l 2 r
+2 2 s
+2 s 2 t
+2 2 t 2 r 6 u
+6 6 u 6 v
+6 v 6

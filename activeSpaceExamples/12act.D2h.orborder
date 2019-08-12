@@ -1,0 +1,24 @@
+# occupation per irrep
+DOCC [ 10, 2, 4, 2, 1, 7, 6, 7 ]
+# the symmetry group is D2h
+
+# orbital ordering
+
+# B1g
+2:1
+2:2
+2:3
+2:4
+
+# B2g
+3:3
+3:4
+3:5
+3:6
+
+# B3g
+4:1
+4:2
+4:3
+4:4
+

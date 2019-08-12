@@ -1,0 +1,26 @@
+ALL IRREPS ARE NUMBERED USING THE PSI4 iRREP CONVENTIONS!
+
+
+# different active spaces:
+-> .txt = a chemps2 input when using the original FCIDUMP
+-> .<sym>.txt = a chemps2 input when the FCIDUMP is
+                 filtered using the corresponding orborder
+-> .D2h.orborder = filter for the FCIDUMP, based on D2h irrep
+               bonding and anti-bonding
+-> .Oh.orbordered = filter for the FCIDUMP, based on Oh irreps
+# remark: Oh and D2h based files might choose different active spaces!
+
+
+# based on non-relativistic, respects dkh too
+12act = type0 = act0 => 12 active orbitals, D2h irrep ordered
+18act => 18 active orbitals, D2h irrep ordered
+
+# based on non-relativistic, splits Oh irreps in dkh
+33act.D2h = type2 = act2 => 33 active orbitals, D2h irrep ordered
+
+# based on scalar relativistic calculations
+33act.Oh => 33 active orbitals, Oh irrep & (anti-)bonding ordered
+39act => 39 active orbitals, D2h irrep & (anti-)bonding ordered
+59act => 59 active orbitals, D2h irrep & (anti-)bonding ordered
+
+
